@@ -1,8 +1,11 @@
 #pragma GCC optimize(3)
 #include <bits/stdc++.h>
 
+// data
+// #define File_IO
+
 // data 1
-#define File_IO1
+// #define File_IO1
 
 // data 2
 // #define File_IO2
@@ -42,6 +45,11 @@ void get_row_matrix(vector<vector<int> > &A, int arg, int swp_id) {
             break;
         }
     }
+    if (swp_id != id) {
+        for (int i = 0; i < n; ++i) {
+            swap(A[id][i], A[swp_id][i]);
+        }
+    }
     for (int i = 0; i < n; ++i) {
         if (i == id) {
             continue;
@@ -50,11 +58,6 @@ void get_row_matrix(vector<vector<int> > &A, int arg, int swp_id) {
             for (int j = 0; j < n; ++j) {
                 A[i][j] ^= A[id][j];
             }
-        }
-    }
-    if (swp_id != id) {
-        for (int i = 0; i < n; ++i) {
-            swap(A[id][i], A[swp_id][i]);
         }
     }
 }
@@ -125,49 +128,6 @@ vector<unsigned int> get_row(vector<unsigned int> ans, int arg, int swp_id) {
     vector<unsigned int> tmp_ans;
     int len = ans.size();
     tmp_ans.resize(len);
-    for (int i = id + 1; i < n; ++i) {
-        if (arg>>i&1) {
-            for (int j = 0; j < len; ++j) {
-                tmp_ans[j] = ans[j];
-                ans[j] &= mask_val[i][j];
-            }
-
-            for (int j = 0; j < len; ++j) {
-                if ((j<<5) + (1<<i) >= (1<<n)) {
-                    ans[j] = 0;
-                    continue;
-                }
-                int pg = ((j<<5) + (1<<i))>>5;
-                int tmp = ((pg + 1)<<5) - (j<<5) - (1<<i);
-                ans[j] = ans[pg]>>(32 - tmp);
-                if (tmp < 32 && pg + 1 < len) {
-                    ans[j] |= (ans[pg + 1]&((1<<32 - tmp) - 1))<<tmp;
-                }
-            }
-
-            for (int j = 0; j < len; ++j) {
-                tmp_ans[j] ^= mask_val[id][j]&ans[j];
-                ans[j] &= ~mask_val[id][j];
-            }
-
-            for (int j = len - 1; j >= 0; --j) {
-                if ((j<<5) - (1<<id) + 31 < 0) {
-                    ans[j] = 0;
-                    continue;
-                }
-                int pg = ((j<<5) - (1<<id) + 31)>>5;
-                int tmp = (j<<5) - (1<<id) + 32 - (pg<<5);
-                ans[j] = (ans[pg]&(unsigned int)((1ll<<tmp) - 1))<<(32 - tmp);
-                if (tmp < 32 && pg >= 1) {
-                    ans[j] |= ans[pg - 1]>>tmp;
-                }
-            }
-
-            for (int j = 0; j < len; ++j) {
-                ans[j] ^= tmp_ans[j];
-            }
-        }
-    }
     if (swp_id != id) {
         vector<int> tmp_ans1(len), tmp_ans2(len);
         for (int i = 0; i < len; ++i) {
@@ -232,6 +192,49 @@ vector<unsigned int> get_row(vector<unsigned int> ans, int arg, int swp_id) {
         for (int i = 0; i < len; ++i) {
             int tmp = (mask_val[id][i]&mask_val[swp_id][i]|(~mask_val[id][i])&(~mask_val[swp_id][i]))&ans[i];
             ans[i] = tmp|tmp_ans1[i]|tmp_ans2[i];
+        }
+    }
+    for (int i = id + 1; i < n; ++i) {
+        if (arg>>i&1) {
+            for (int j = 0; j < len; ++j) {
+                tmp_ans[j] = ans[j];
+                ans[j] &= mask_val[i][j];
+            }
+
+            for (int j = 0; j < len; ++j) {
+                if ((j<<5) + (1<<i) >= (1<<n)) {
+                    ans[j] = 0;
+                    continue;
+                }
+                int pg = ((j<<5) + (1<<i))>>5;
+                int tmp = ((pg + 1)<<5) - (j<<5) - (1<<i);
+                ans[j] = ans[pg]>>(32 - tmp);
+                if (tmp < 32 && pg + 1 < len) {
+                    ans[j] |= (ans[pg + 1]&((1<<32 - tmp) - 1))<<tmp;
+                }
+            }
+
+            for (int j = 0; j < len; ++j) {
+                tmp_ans[j] ^= mask_val[id][j]&ans[j];
+                ans[j] &= ~mask_val[id][j];
+            }
+
+            for (int j = len - 1; j >= 0; --j) {
+                if ((j<<5) - (1<<id) + 31 < 0) {
+                    ans[j] = 0;
+                    continue;
+                }
+                int pg = ((j<<5) - (1<<id) + 31)>>5;
+                int tmp = (j<<5) - (1<<id) + 32 - (pg<<5);
+                ans[j] = (ans[pg]&(unsigned int)((1ll<<tmp) - 1))<<(32 - tmp);
+                if (tmp < 32 && pg >= 1) {
+                    ans[j] |= ans[pg - 1]>>tmp;
+                }
+            }
+
+            for (int j = 0; j < len; ++j) {
+                ans[j] ^= tmp_ans[j];
+            }
         }
     }
     return ans;
@@ -323,6 +326,7 @@ void dfs_get_map(vector<unsigned int> x, int id) {
     }
 }
 
+// old version
 void dfs_check(vector<unsigned int> x, int id) {
     if (id == n) {
         cout << "Find solution!" << endl;
@@ -339,6 +343,47 @@ void dfs_check(vector<unsigned int> x, int id) {
             }
             que_operate_row.pop_back();
         }
+    }
+}
+
+// new version
+void dfs_check2(vector<unsigned int> x, int id, int i) {
+    if (id == n) {
+        cout << "Find solution!" << endl;
+        find_solution = 1;
+        return ;
+    }
+    for (int mask = (1<<id); mask < (1<<n); mask += (1<<id)) {
+        vector<unsigned int> y = get_row(x, mask, id);
+        que_operate_row.push_back(mask);
+        if ((1<<id) < i) {
+            dfs_check2(y, id + 1, i);
+            if (find_solution) {
+                return ;
+            }
+        }
+        else {
+            vector<unsigned int> tmp_y = y;
+            if ((1<<id) == i) {
+                for (int j = 0; j < n; ++j) {
+                    if (i>>j&1) {
+                        for (int k = 0; k < (1<<n); ++k) {
+                            if ((k>>j&1) && (tmp_y[k>>5]>>(k&31)&1)) {
+                                int chg_id = k^(1<<j);
+                                tmp_y[chg_id>>5] ^= ((unsigned int)1<<(chg_id&31));
+                            }
+                        }
+                    }
+                }
+            }
+            if (check_map(tmp_y, high, low, id)) {
+                dfs_check2(tmp_y, id + 1, i);
+            }
+            if (find_solution) {
+                return ;
+            }
+        }
+        que_operate_row.pop_back();
     }
 }
 
@@ -448,18 +493,22 @@ vector<unsigned int> get_constant(vector<unsigned int> x, int b) {
 }
 
 int main() {
+    #ifdef File_IO
+        freopen("./input.txt", "r", stdin);
+        freopen("./output.txt", "w", stdout);
+    #endif // File_IO
     #ifdef File_IO1
         freopen("./input1.txt", "r", stdin);
         freopen("./output1.txt", "w", stdout);
-    #endif // File_IO
+    #endif // File_IO1
     #ifdef File_IO2
         freopen("./input2.txt", "r", stdin);
         freopen("./output2.txt", "w", stdout);
-    #endif // File_IO
+    #endif // File_IO2
     #ifdef File_IO3
         freopen("./input3.txt", "r", stdin);
         freopen("./output3.txt", "w", stdout);
-    #endif // File_IO
+    #endif // File_IO3
     clock_t start,end;
     start = clock();
     cin >> n >> high >> low;
@@ -540,28 +589,15 @@ int main() {
     dfs_get_map(s, 0);
     cout << "Get map done!" << endl;
     vector<unsigned int> ans_d;
-    int b = -1;
     for (int i = 0; i < (1<<n); ++i) {
         if (__builtin_popcount(i) > 1) {
             continue;
         }
-        vector<unsigned int> tmp_d = d;
-        for (int j = 0; j < n; ++j) {
-            if (i>>j&1) {
-                for (int k = 0; k < (1<<n); ++k) {
-                    if ((k>>j&1) && (tmp_d[k>>5]>>(k&31)&1)) {
-                        int chg_id = k^(1<<j);
-                        tmp_d[chg_id>>5] ^= ((unsigned int)1<<(chg_id&31));
-                    }
-                }
-            }
-        }
         que_operate_row.clear();
         find_solution = 0;
-        dfs_check(tmp_d, 0);
+        dfs_check2(d, 0, i);
         if (find_solution) {
-            ans_d = tmp_d;
-            b = i;
+            ans_d = d;
             break;
         }
     }
@@ -608,6 +644,21 @@ int main() {
     for (int i = 0; i < (1<<n); ++i) {
         cout << (tmp_ans[i>>5]>>(i&31)&1);
     }
-    tmp_ans = get_constant(tmp_ans, b);
     cout << endl;
+    for (int i = 0; i < (1<<n); ++i) {
+        vector<unsigned int> tmp_ans2 = get_constant(tmp_ans, i);
+        int ok = 1;
+        for (int j = 0; j < (1<<n); ++j) {
+            if (__builtin_popcount(j) >= low && __builtin_popcount(j) <= high && (tmp_ans2[j>>5]>>(j&31)&1) != ddd[j] - '0') {
+                ok = 0;
+                break;
+            }
+        }
+        if (ok) {
+            cout << i << endl;
+            cout << "Verified passed!" << endl;
+            return 0;
+        }
+    }
+    cout << "Verified failed!" << endl;
 }
